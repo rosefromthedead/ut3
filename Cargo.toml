@@ -1,0 +1,10 @@
+[package]
+name = "ut3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+accesskit = "*"
+masonry = { git = "https://github.com/linebender/xilem", branch = "main" }
+smallvec = "*"
+xilem = { git = "https://github.com/linebender/xilem", branch = "main" }
