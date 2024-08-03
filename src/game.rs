@@ -3,7 +3,8 @@ use crate::Player;
 // sorry
 impl crate::Ultimate {
     pub fn is_playable(&self, coord: usize) -> bool {
-        let mut is_playable = self.tiles[coord].is_none();
+        let mut is_playable =
+            self.tiles[coord].is_none() && self.whose_turn == Some(self.local_player);
         if let Some(last_move) = self.history.last() {
             let open_minisquare_x = last_move % 3;
             let open_minisquare_y = (last_move / 9) % 3;
@@ -18,17 +19,16 @@ impl crate::Ultimate {
         is_playable
     }
 
-    pub fn make_move(&mut self, coord: usize) {
-        assert!(self.is_playable(coord));
-        assert_eq!(self.whose_turn, Some(self.local_player));
-        self.tiles[coord] = Some(self.local_player);
+    pub fn handle_move(&mut self, player: Player, coord: usize) {
+        assert_eq!(self.whose_turn, Some(player));
+        self.tiles[coord] = Some(player);
 
         // did we win a minisquare?
         let inner_x = coord % 3;
         let inner_y = (coord / 9) % 3;
         let outer_x = (coord % 9) / 3;
         let outer_y = coord / 27;
-        let us = self.local_player;
+        let us = player;
         let topleft = outer_y * 27 + outer_x * 3;
         let won_axis = (self.tiles[topleft + inner_y * 9] == Some(us)
             && self.tiles[topleft + inner_y * 9 + 1] == Some(us)
@@ -69,6 +69,23 @@ impl crate::Ultimate {
             None => unreachable!("there's an assert further up"),
         };
         self.whose_turn = Some(whose_turn);
-        self.local_player = whose_turn; // local multiplayer
+    }
+
+    pub fn make_move(&mut self, coord: usize) {
+        assert!(self.is_playable(coord));
+        self.handle_move(self.local_player, coord);
+        match self.send {
+            Some(ref tx) => {
+                tx.try_send(coord).expect(
+                    "we should have flushed the previous move, else we can't make this move!",
+                );
+            }
+            None => {
+                if let Some(whose_turn) = self.whose_turn {
+                    // if the game hasn't ended
+                    self.local_player = whose_turn; // local multiplayer
+                }
+            }
+        }
     }
 }

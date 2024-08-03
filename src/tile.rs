@@ -34,9 +34,7 @@ impl<A> xilem::core::View<crate::Ultimate, A, ViewCtx> for Tile {
         ctx.with_leaf_action_widget(|_| {
             Pod::new(TileWidget {
                 content: self.content,
-                // everything is playable at the beginning
-                // we will disable the whole board when it's the remote player's turn
-                is_playable: true,
+                is_playable: self.is_playable,
             })
         })
     }
@@ -55,7 +53,6 @@ impl<A> xilem::core::View<crate::Ultimate, A, ViewCtx> for Tile {
         }
         if self.is_playable != prev.is_playable {
             e.widget.is_playable = self.is_playable;
-            e.ctx.set_disabled(!self.is_playable);
             e.ctx.request_paint();
         }
         e
@@ -101,7 +98,7 @@ impl masonry::Widget for TileWidget {
         }
 
         if let PointerEvent::PointerUp(button, _) = event {
-            if *button == PointerButton::Primary && ctx.is_active() && !ctx.is_disabled() {
+            if *button == PointerButton::Primary && ctx.is_active() && self.is_playable {
                 ctx.submit_action(Action::ButtonPressed(*button));
                 ctx.set_active(false);
             }
@@ -128,7 +125,7 @@ impl masonry::Widget for TileWidget {
 
     fn paint(&mut self, ctx: &mut PaintCtx, scene: &mut Scene) {
         let (w, h) = ctx.size().into();
-        let colour = if ctx.is_disabled() {
+        let colour = if !self.is_playable {
             Color::rgb8(26, 26, 26)
         } else if ctx.is_hot() {
             Color::rgb8(80, 80, 80)

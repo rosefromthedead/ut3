@@ -5,6 +5,9 @@ edition = "2021"
 
 [dependencies]
 accesskit = "*"
+futures = "0.3.30"
 masonry = { git = "https://github.com/linebender/xilem", branch = "main" }
 smallvec = "*"
+tokio = { version = "1.39.2", features = ["io-util", "net", "sync"] }
+tracing = "*"
 xilem = { git = "https://github.com/linebender/xilem", branch = "main" }
